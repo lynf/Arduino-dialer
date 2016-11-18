@@ -5,6 +5,8 @@
  *   Author: lynf
  */
 ;
+;	2016-Sept-01 revised for ATmega328P
+;
 ;
 ;######################################################################################
 ; This software is Copyright by Francis Lyn and is issued under the following license:
@@ -13,8 +15,11 @@
 ;
 ;######################################################################################
 ;
-;
-;	2016-Sept-01 revised for ATmega328P
+; Change Log:
+; ===========
+; 1. Revise <initz:> to enable pull-ups on all unused ports as precaution
+;	to reduce unnecessary device current consupmtion.
+; 
 ;
 ;
 ; ATmega328P cpu, 16.0000 MHz external crystal.
@@ -206,7 +211,7 @@
 .equ	t100v = 24 			; Timer 1 reload value, 100 ms
 .equ	t500v = 122			; Timer 2 reload value, 500 ms
 .equ	HOOK =	PB0			; HOOK relay driver
-.equ	bluled = PC1		; Blue LED driver
+.equ	bluled = PB1		; Blue LED driver
 .equ	redled = PB2		; Red LED driver
 
 ;
@@ -643,23 +648,22 @@ URXCint1:
 ;
 initz:	
 ;
-; Initialize PD7...4 as keypad scan row return line inputs
+; Activate pull-up resistors on all input pins, used and unused
 ;
-		in		rmp,PIND
-		sbr		rmp,(1<<PD7)
-		sbr		rmp,(1<<PD6)
-		sbr		rmp,(1<<PD5)
-		sbr		rmp,(1<<PD4)
-		out		PORTD,rmp		; Set PD bits high
+		ldi		rmp,0b00111000		; PB5,4,3 SPI lines, PB2,1,0 control outputs
+		out		PORTB,rmp
+;
+		ldi		rmp,0b00110000		; PC3...0 keypad column scan outputs
+		out		PORTC,rmp
+;
+		ldi		rmp,0b11111100		; PD7...4 keypad row scan return inputs
+		out		PORTD,rmp
+;
 ;
 ; Initialize PB5...0 as tone generator control ouptuts
 ;
 		ldi		rmp,(1<<bluled)|(1<<redled)|(1<<HOOK)|(1<<nce)|(1<<clk)|(1<<data)
 		out		DDRB,rmp					; Set output direction
-		ldi		rmp,(1<<nce)|(1<<clk)|(1<<data)
-		out		PORTB,rmp					; Set outputs high
-
-
 ;
 ; Initialize PC3...0 as outputs for keypad column scanner outputs
 ;
